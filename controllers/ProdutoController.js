@@ -1,9 +1,11 @@
 const mongoose = require("mongoose");
 const { ClienteValidation } = require("./validacoes/clienteValidation");
+
 const Produto = mongoose.model("Produto");
 const Categoria = mongoose.model("Categoria");
+const Avaliacao = mongoose.model("Avaliacao");
 
-function getSort(sortType){
+const getSort = (sortType) =>{
   switch (sortType) {
     case "alfabetica_a-z":
       return { titulo: 1 };
@@ -18,9 +20,7 @@ function getSort(sortType){
   }
 }
 
-oi = () => {
-  console.log("oi")
-}
+
 
 class ProdutoController {
 
@@ -79,7 +79,7 @@ class ProdutoController {
         const newCategoria = await Categoria.findById(categoria);
         
         if(oldCategoria && newCategoria){
-          oldCategoria.produtos = oldCategoria.produtos.filter(item => item !== produto._id);
+          oldCategoria.produtos = oldCategoria.produtos.filter(item => item.toString() !== produto._id.toString());
           newCategoria.produtos.push(produto._id);
           produto.categoria = categoria;
           await oldCategoria.save();
@@ -108,7 +108,7 @@ class ProdutoController {
       if(!produto) return res.status(400).send({ errors: "Produto não encontrado" });
 
       const novasImagens = req.files.map(item => item.filename);
-      produtos.fotos = produtos.fotos.filter(item => item).concat(novasImagens); //filtra imagens caso sejam inválidas e coloca uma nova imagem no final do array
+      produto.fotos = produto.fotos.filter(item => item).concat(novasImagens); //filtra imagens caso sejam inválidas e coloca uma nova imagem no final do array
 
       await produto.save();
       return res.send({ produto });
@@ -127,12 +127,12 @@ class ProdutoController {
 
       const categoria = await Categoria.findById(produto.categoria);
       if(categoria) {
-        categoria.produtos = categoria.produtos.filter(item => item !== produto._id);
+        categoria.produtos = categoria.produtos.filter(item => item.toString() !== produto._id.toString());
         console.log(categoria.produtos);
         await categoria.save();
       }
 
-      produto.remove();
+      await produto.remove();
       return res.send({ deletado: true });
     }catch(err){
       next(err);
@@ -221,6 +221,21 @@ class ProdutoController {
         
       if(!produto) return res.status(400).send({ errors: "Produto não encontrado" });
       return res.send({ produto });
+    }catch(err){
+      next(err);
+    }
+  }
+
+  /****
+   * ***
+   * AVALIACOES
+  */
+
+  //GET "/:id/avaliacoes" - showAvaliacoes
+  async showAvaliacoes(req,res,next){
+    try{
+      const avaliacoes = await Avaliacao.find({ produto: req.params.id }) 
+      return res.send({ avaliacoes });
     }catch(err){
       next(err);
     }

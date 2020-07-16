@@ -1,6 +1,8 @@
 const mongoose = require("mongoose");
+const { array } = require("../config/multer");
 const Categoria = mongoose.model("Categoria");
 const Produto = mongoose.model("Produto");
+
 
 class CategoriaController {
   
@@ -101,8 +103,8 @@ class CategoriaController {
 
   //GET "/:id/produtos"
   async showProdutos(req,res,next){
-    const { offset } = Number(req.query) || 0;
-    const { limit } = Number(req.query) || 30;
+    const  offset = Number(req.query) || 0;
+    const  limit  = Number(req.query) || 30;
     try{
       const produtos = await Produto.paginate(
         { categoria: req.params.id },
@@ -130,7 +132,7 @@ class CategoriaController {
       });
 
       _produtos = await Promise.all(_produtos.map( async(produto) => {
-        if(!produtos.include(produto._id)){
+        if(!produtos.includes(produto._id.toString())){
           produto.categoria = null
         } else {
           produto.categoria = req.params.id

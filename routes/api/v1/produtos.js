@@ -2,9 +2,11 @@ const router = require("express").Router();
 const ProdutoController = require('../../../controllers/ProdutoController');
 
 const auth = require('../../auth');
+
 const { LojaValidation } = require("../../../controllers/validacoes/lojaValidation");
 const { ProdutoValidation } = require("../../../controllers/validacoes/produtoValidation");
 const Validation = require("express-validation");
+
 const upload = require('../../../config/multer');
 
 const produtoController = new ProdutoController();
@@ -12,7 +14,7 @@ const produtoController = new ProdutoController();
 //ADMIN
 router.post("/", auth.required, LojaValidation.admin, Validation(ProdutoValidation.store),produtoController.store); //checked
 router.put("/:id", auth.required, LojaValidation.admin, Validation(ProdutoValidation.update), produtoController.update); //checked
-router.put("/images/:id", auth.required, LojaValidation.admin, Validation(ProdutoValidation.updateImages), upload.array("files", 4), produtoController.updateImages);
+router.put("/images/:id", auth.required, LojaValidation.admin, Validation(ProdutoValidation.updateImages), upload.array("files", 4), produtoController.updateImages); //checked
 router.delete("/:id", auth.required, LojaValidation.admin, Validation(ProdutoValidation.remove), produtoController.remove); //checked
 
 
@@ -27,5 +29,6 @@ router.get("/:id", Validation(ProdutoValidation.show), produtoController.show); 
 
 
 //AVALIACOES
+router.get("/:id/avaliacoes", Validation(ProdutoValidation.showAvaliacoes), produtoController.showAvaliacoes); //checked
 
 module.exports = router;

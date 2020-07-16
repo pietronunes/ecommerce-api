@@ -5,6 +5,6 @@ module.exports = {
   port: 465,
   auth: {
     user: "pietrociprianonunes123@gmail.com",
-    pass: "batataeruin"
+    pass: ""
   }
 };

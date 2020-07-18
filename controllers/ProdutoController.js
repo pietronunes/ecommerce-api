@@ -4,6 +4,7 @@ const { ClienteValidation } = require("./validacoes/clienteValidation");
 const Produto = mongoose.model("Produto");
 const Categoria = mongoose.model("Categoria");
 const Avaliacao = mongoose.model("Avaliacao");
+const Variacao = mongoose.model("Variacao");
 
 const getSort = (sortType) =>{
   switch (sortType) {
@@ -225,6 +226,23 @@ class ProdutoController {
       next(err);
     }
   }
+
+  /****
+   * ***
+   * VARIACOES
+  */
+  //GET "/:id/variacoes" - showVariacoes
+  async showVariacoes(req,res,next){
+    const { idProduto } = req.params
+    try{
+      const variacoes = await Variacao.find({ produto: idProduto});
+      if(!variacoes) return res.status(400).send({ errors: "Nenhuma Variação encontrada" });
+      return res.send({ variacoes });
+    }catch(err){
+      next(err);
+    }
+  }
+
 
   /****
    * ***

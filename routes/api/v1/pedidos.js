@@ -1,5 +1,3 @@
-const { required } = require("joi");
-
 const router = require("express").Router();
 const auth = require("../../auth");
 const { LojaValidation } = require("../../../controllers/validacoes/lojaValidation");

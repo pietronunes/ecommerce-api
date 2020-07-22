@@ -10,13 +10,20 @@ const upload = require("../../../config/multer");
 const variacaoController = new VariacaoController();
 
 //CLIENTES/VISITANTES
-router.get("/", Validation(VariacaoValidation.index), variacaoController.index);
-router.get("/:id", Validation(VariacaoValidation.show), variacaoController.show);
+router.get("/", Validation(VariacaoValidation.index), variacaoController.index); //checked
+router.get("/:id", Validation(VariacaoValidation.show), variacaoController.show); //checked
 
 //ADMIN
-router.post("/", auth.required, LojaValidation.admin, Validation(VariacaoValidation.store), variacaoController.store);
-router.put("/:id", auth.required, LojaValidation.admin, Validation(VariacaoValidation.update), variacaoController.update);
-router.put("/images/:id", auth.required, LojaValidation.admin, upload.array("files", 4), Validation(VariacaoValidation.updateImages), variacaoController.updateImages);
-router.delete("/:id", auth.required, LojaValidation.admin, Validation(VariacaoValidation.remove), variacaoController.remove);
+router.post("/", auth.required, LojaValidation.admin, Validation(VariacaoValidation.store), variacaoController.store); //checked
+router.put("/:id", auth.required, LojaValidation.admin, Validation(VariacaoValidation.update), variacaoController.update); //checked
+router.put(
+  "/images/:id",
+  auth.required,
+  LojaValidation.admin,
+  upload.array("files", 4),
+  Validation(VariacaoValidation.updateImages),
+  variacaoController.updateImages
+); //checked
+router.delete("/:id", auth.required, LojaValidation.admin, Validation(VariacaoValidation.remove), variacaoController.remove); //checked
 
 module.exports = router;

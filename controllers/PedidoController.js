@@ -7,6 +7,8 @@ const Cliente = mongoose.model("Cliente");
 const Entrega = mongoose.model("Entrega");
 const Pagamento = mongoose.model("Pagamento");
 
+const CarrinhoValidation = require("./validacoes/carrinhoValidation");
+
 class PedidoController {
   /** @description
    * (pedidos.docs ---)
@@ -207,7 +209,7 @@ class PedidoController {
     try {
       const cliente = await Cliente.findOne({ usuario: req.payload.id });
       //CHECAR DADOS CARRINHO
-      //if(!CarrinhoValidation(carrinho)) return res.status(422).send({ errors: "Carrinho Inválido" });
+      if (!CarrinhoValidation(carrinho)) return res.status(422).send({ errors: "Carrinho Inválido" });
 
       //CHECAR DADOS ENTREGA
       //if(!EntregaValidation(carrinho, entrega)) return res.status(422).send({ errors: "Dados de Entrega Inválidos" });

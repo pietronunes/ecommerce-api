@@ -6,6 +6,7 @@ const Variacao = mongoose.model("Variacao");
 const Cliente = mongoose.model("Cliente");
 const Entrega = mongoose.model("Entrega");
 const Pagamento = mongoose.model("Pagamento");
+const RegistroPedido = mongoose.model("RegistroPedido");
 
 const CarrinhoValidation = require("./validacoes/carrinhoValidation");
 
@@ -50,10 +51,9 @@ class PedidoController {
 
   // GET "/admin/:id" - showAdmin
   async showAdmin(req, res, next) {
-    const { id } = req.params.id;
-    const { loja } = req.query.loja;
+    const { loja } = req.query;
     try {
-      const pedido = await Pedido.findOne({ _id: id, loja }).populate(["cliente", "pagamento", "entrega"]);
+      const pedido = await Pedido.findOne({ _id: req.params.id, loja }).populate(["cliente", "pagamento", "entrega"]);
       pedido.carrinho = await Promise.all(
         pedido.carrinho.map(async (item) => {
           item.produto = await Produto.findById(item.produto);
@@ -61,7 +61,9 @@ class PedidoController {
           return item;
         })
       );
-      return res.send({ pedido });
+      const registro = await RegistroPedido.find({ pedido: pedido._id });
+
+      return res.send({ pedido, registro });
     } catch (err) {
       next(err);
     }
@@ -70,16 +72,24 @@ class PedidoController {
   //REMOVE "/admin/:id" - removeAdmin
   async removeAdmin(req, res, next) {
     const { id } = req.params;
-    const { loja } = req.query.loja;
+    const { loja } = req.query;
     try {
       const pedido = await Pedido.findOne({ _id: id, loja });
       if (!pedido) return res.status(400).send({ errors: "Pedido não encontrado" });
 
-      //REGISTRO DE ATIVIDADES = PEDIDO CANCELADO
       //ENVIAR EMAIL CLIENTE DE PEDIDO CANCELADO
 
       pedido.cancelado = true;
       await pedido.save();
+
+      //REGISTRO DE ATIVIDADES = PEDIDO CANCELADO
+      const registroPedido = new RegistroPedido({
+        pedido: pedido._id,
+        tipo: "pedido",
+        situacao: "pedido_cancelado",
+      });
+
+      await registroPedido.save();
 
       return res.send({ cancelado: true });
     } catch (err) {
@@ -90,7 +100,7 @@ class PedidoController {
   //GET "/admin/:id/carrinho" - showCarrinhoPedidoAdmin
   async showCarrinhoPedidoAdmin(req, res, next) {
     const { id } = req.params;
-    const { loja } = req.query.loja;
+    const { loja } = req.query;
     try {
       const pedido = await Pedido.findOne({ _id: id, loja });
       if (!pedido) return res.status(400).send({ errors: "Pedido não encontrado" });
@@ -122,7 +132,7 @@ class PedidoController {
         { loja: loja, cliente: cliente._id },
         { offset, limit, populate: ["cliente", "pagamento", "entrega"] }
       );
-      pedidos.docs = Promise.all(
+      pedidos.docs = await Promise.all(
         pedidos.docs.map(async (pedido) => {
           pedido.carrinho = Promise.all(
             pedido.carrinho.map(async (item) => {
@@ -143,7 +153,7 @@ class PedidoController {
 
   //GET "/:id" - show
   async show(req, res, next) {
-    const { id } = req.body;
+    const { id } = req.params;
     try {
       const cliente = await Cliente.findOne({ usuario: req.payload.id });
       const pedido = await Pedido.findOne({ _id: id, cliente: cliente._id }).populate(["cliente", "entrega", "pagamento"]);
@@ -156,7 +166,9 @@ class PedidoController {
         })
       );
 
-      return res.send({ pedido });
+      const registro = await RegistroPedido.find({ pedido: pedido._id });
+
+      return res.send({ pedido, registro });
     } catch (err) {
       next(err);
     }
@@ -164,7 +176,7 @@ class PedidoController {
 
   //GET "/:id/carrinho" showCarrinhoPedido
   async showCarrinhoPedido(req, res, next) {
-    const { id } = req.body;
+    const { id } = req.params;
     try {
       const cliente = await Cliente.findOne({ usuario: req.payload.id });
       const pedido = await Pedido.findOne({ _id: id, cliente: cliente._id });
@@ -185,17 +197,24 @@ class PedidoController {
 
   //REMOVE "/:id" - remove
   async remove(req, res, next) {
-    const { id } = req.body;
+    const { id } = req.params;
     try {
       const cliente = await Cliente.findOne({ usuario: req.payload.id });
       const pedido = await Pedido.findOne({ _id: id, cliente: cliente._id });
       if (!pedido) return res.status(400).send({ errors: "Pedido não encontrado" });
-
-      //REGISTRO DE ATIVIDADES = PEDIDO CANCELADO
       //ENVIAR EMAIL ADMIN DE PEDIDO CANCELADO
 
       pedido.cancelado = true;
       await pedido.save();
+
+      //REGISTRO DE ATIVIDADES = PEDIDO CANCELADO
+      const registroPedido = new RegistroPedido({
+        pedido: pedido._id,
+        tipo: "pedido",
+        situacao: "pedido_cancelado",
+      });
+      await registroPedido.save();
+
       return res.send({ cancelado: true });
     } catch (err) {
       next(err);
@@ -209,7 +228,7 @@ class PedidoController {
     try {
       const cliente = await Cliente.findOne({ usuario: req.payload.id });
       //CHECAR DADOS CARRINHO
-      if (!CarrinhoValidation(carrinho)) return res.status(422).send({ errors: "Carrinho Inválido" });
+      if (!(await CarrinhoValidation(carrinho))) return res.status(422).send({ errors: "Carrinho Inválido" });
 
       //CHECAR DADOS ENTREGA
       //if(!EntregaValidation(carrinho, entrega)) return res.status(422).send({ errors: "Dados de Entrega Inválidos" });
@@ -231,6 +250,7 @@ class PedidoController {
         status: "nao_iniciada",
         custo: entrega.custo,
         prazo: entrega.prazo,
+        tipo: entrega.tipo,
         payload: entrega,
         loja: loja,
       });
@@ -252,8 +272,17 @@ class PedidoController {
 
       // Notificar via email - cliente e admin - novo pedido;
 
+      //REGISTRO DE ATIVIDADES = PEDIDO CRIADO
+      const registroPedido = new RegistroPedido({
+        pedido: pedido._id,
+        tipo: "pedido",
+        situacao: "pedido_criado",
+      });
+
+      await registroPedido.save();
+
       // Retorna um obj mais completo com info de pagamentos/entrega
-      return res.send({ pedido: Object.assign({}, pedido, { entrega: novaEntrega, pagamento: novoPagamento }) });
+      return res.send({ pedido: Object.assign({}, pedido._doc, { entrega: novaEntrega, pagamento: novoPagamento }) });
     } catch (err) {
       next(err);
     }

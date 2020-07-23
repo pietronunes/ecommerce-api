@@ -16,7 +16,7 @@ router.get(
   LojaValidation.admin,
   Validation(ClienteValidation.searchPedidos),
   clienteController.searchPedidos
-);
+); //checked
 router.get("/search/:search", auth.required, LojaValidation.admin, Validation(ClienteValidation.search), clienteController.search); //checked
 
 router.get("/admin/:id", auth.required, LojaValidation.admin, Validation(ClienteValidation.showAdmin), clienteController.showAdmin); //checked
@@ -27,7 +27,7 @@ router.get(
   LojaValidation.admin,
   Validation(ClienteValidation.showPedidosCliente),
   clienteController.showPedidosCliente
-);
+); //checked
 
 router.put(
   "/admin/:id",

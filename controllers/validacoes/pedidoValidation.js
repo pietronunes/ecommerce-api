@@ -64,6 +64,7 @@ const PedidoValidation = {
       entrega: Joi.object({
         custo: Joi.number().required(),
         prazo: Joi.number().required(),
+        tipo: Joi.string().required(),
       }).required(),
       pagamento: Joi.object({
         valor: Joi.number().required(),

@@ -41,11 +41,13 @@ class ClienteController {
 
       pedidos.docs = await Promise.all(
         pedidos.docs.map(async (pedido) => {
-          pedido.carrinho = await Promise.all(async (item) => {
-            item.produto = await Produto.findById(item.produto);
-            item.variacao = await Variacao.findById(item.variacao);
-            return item;
-          });
+          pedido.carrinho = await Promise.all(
+            pedido.carrinho.map(async (item) => {
+              item.produto = await Produto.findById(item.produto);
+              item.variacao = await Variacao.findById(item.variacao);
+              return item;
+            })
+          );
           return pedido;
         })
       );
@@ -96,11 +98,13 @@ class ClienteController {
 
       pedidos.docs = await Promise.all(
         pedidos.docs.map(async (pedido) => {
-          pedido.carrinho = await Promise.all(async (item) => {
-            item.produto = await Produto.findById(item.produto);
-            item.variacao = await Variacao.findById(item.variacao);
-            return item;
-          });
+          pedido.carrinho = await Promise.all(
+            pedido.carrinho.map(async (item) => {
+              item.produto = await Produto.findById(item.produto);
+              item.variacao = await Variacao.findById(item.variacao);
+              return item;
+            })
+          );
           return pedido;
         })
       );
@@ -221,5 +225,4 @@ class ClienteController {
     }
   }
 }
-
 module.exports = ClienteController;

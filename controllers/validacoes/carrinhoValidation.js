@@ -25,14 +25,14 @@ const getValuesCarrinho = (carrinho) => {
  * - Somamos os valores de qtd e preco usando o reduce e retornamos no obj;
  */
 
-const getValuesLoja = (carrinho) => {
-  const results = Promise.all(
+const getValuesLoja = async (carrinho) => {
+  const results = await Promise.all(
     carrinho.map(async (item) => {
       const produto = await Produto.findById(item.produto);
       const variacao = await Variacao.findById(item.variacao);
       let preco = 0;
       let qtd = 0;
-      if (produto && variacao && produto.variacoes.includes(variacao._id)) {
+      if (produto && variacao && produto.variacoes.map((item) => item.toString()).includes(variacao._id.toString())) {
         let precoReal = variacao.promocao || variacao.preco;
         preco = precoReal * item.quantidade;
         qtd = item.quantidade;
@@ -45,9 +45,9 @@ const getValuesLoja = (carrinho) => {
   return { precoTotal, quantidade };
 };
 
-function CarrinhoValidation(carrinho) {
+async function CarrinhoValidation(carrinho) {
   const { quantidade: quantidadeCarrinho, precoTotal: precoTotalCarrinho } = getValuesCarrinho(carrinho); //recebe objs da função
-  const { quantidade: quantidadeLoja, precoTotal: precoTotalLoja } = getValuesLoja(carrinho); //recebe objs da função
+  const { quantidade: quantidadeLoja, precoTotal: precoTotalLoja } = await getValuesLoja(carrinho); //recebe objs da função
   if (quantidadeCarrinho === quantidadeLoja && precoTotalCarrinho === precoTotalLoja) {
     return true;
   } else {

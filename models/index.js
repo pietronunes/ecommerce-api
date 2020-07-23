@@ -1,16 +1,14 @@
-const { required } = require('joi');
+require("./loja");
 
-require('./loja');
-
-require('./usuario');
+require("./usuario");
 require("./clientes");
 
-require('./categoria');
-require('./produto');
+require("./categoria");
+require("./produto");
 require("./avaliacao");
 require("./variacao");
 
 require("./pedido");
 require("./entrega");
 require("./pagamento");
-
+require("./registroPedido");

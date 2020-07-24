@@ -9,8 +9,8 @@ const Validation = require("express-validation");
 const entregaController = new EntregaController();
 
 // ENTREGA ROTAS
-router.get("/:id", auth.required, Validation(EntregaValidation.show), entregaController.show);
-router.put("/:id", auth.required, LojaValidation.admin, Validation(EntregaValidation.update), entregaController.update);
-router.post("/calcular", Validation(EntregaValidation.calcular), entregaController.calcular);
+router.get("/:id", auth.required, Validation(EntregaValidation.show), entregaController.show); //checked
+router.put("/:id", auth.required, LojaValidation.admin, Validation(EntregaValidation.update), entregaController.update); //checked
+router.post("/calcular", Validation(EntregaValidation.calcular), entregaController.calcular); //checked
 
 module.exports = router;

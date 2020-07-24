@@ -1,6 +1,6 @@
-const emailData = require('../config/email')
-const transporter = require('nodemailer').createTransport(emailData);
-const { api: link } = require('../config/index');
+const emailData = require("../config/email");
+const transporter = require("nodemailer").createTransport(emailData);
+const { api: link } = require("../config/index");
 
 module.exports = ({ usuario, recovery }, cb) => {
   const message = `
@@ -24,21 +24,19 @@ module.exports = ({ usuario, recovery }, cb) => {
     from: "naorespondalojati@gmail.com",
     to: usuario.email,
     subject: "Redefinição de Senha - LOJA TI",
-    html: message
+    html: message,
   };
 
-  if(process.env.NODE_ENV === 'production'){
-    transporter.sendMail(opcoesEmail, (errors, info) => {
-      if(errors){
+  if (process.env.NODE_ENV === "production") {
+    transporter.sendMail(opcoesEmail, (errors) => {
+      if (errors) {
         return cb("Ocorreu um erro ao enviar o email");
-      }else{
-        return cb(null,"Link para a redefinição de senha foi enviado com sucesso");
+      } else {
+        return cb(null, "Link para a redefinição de senha foi enviado com sucesso");
       }
     });
-  }else{
+  } else {
     console.log(opcoesEmail);
-    return cb(null,"Link para a redefinição de senha foi enviado com sucesso");
+    return cb(null, "Link para a redefinição de senha foi enviado com sucesso");
   }
-
-
 };

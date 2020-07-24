@@ -9,6 +9,7 @@ const Pagamento = mongoose.model("Pagamento");
 const RegistroPedido = mongoose.model("RegistroPedido");
 
 const CarrinhoValidation = require("./validacoes/carrinhoValidation");
+const EntregaValidation = require("./validacoes/entregaValidation");
 
 class PedidoController {
   /** @description
@@ -226,12 +227,13 @@ class PedidoController {
     const { carrinho, entrega, pagamento } = req.body; // OBJS COM INFORMAÇÕES PAGAMENTO, ENTREGA ETC
     const { loja } = req.query;
     try {
-      const cliente = await Cliente.findOne({ usuario: req.payload.id });
+      const cliente = await (await Cliente.findOne({ usuario: req.payload.id })).populate("Usuario");
       //CHECAR DADOS CARRINHO
       if (!(await CarrinhoValidation(carrinho))) return res.status(422).send({ errors: "Carrinho Inválido" });
 
       //CHECAR DADOS ENTREGA
-      //if(!EntregaValidation(carrinho, entrega)) return res.status(422).send({ errors: "Dados de Entrega Inválidos" });
+      if (!(await EntregaValidation.checkValorPrazo(cliente.endereco.CEP, carrinho, entrega)))
+        return res.status(422).send({ errors: "Dados de Entrega Inválidos" });
 
       //CHECAR DADOS PAGAMENTO
       //if(!PagamentoValidation(carrinho, pagamento)) return res.status(422).send({ errors: "Dados de Pagamento Inválidos" });
@@ -239,9 +241,12 @@ class PedidoController {
       // CRIANDO NOVO PAGAMENTO
       const novoPagamento = new Pagamento({
         valor: pagamento.valor,
+        parcelas: pagamento.parcelas || 1,
         forma: pagamento.forma,
         status: "iniciando",
-        payload: pagamento,
+        endereco: pagamento.endereco,
+        cartao: pagamento.cartao,
+        enderecoEntregaIgualCobranca: pagamento.enderecoEntregaIgualCobranca,
         loja: loja,
       });
 
@@ -251,7 +256,7 @@ class PedidoController {
         custo: entrega.custo,
         prazo: entrega.prazo,
         tipo: entrega.tipo,
-        payload: entrega,
+        endereco: entrega.endereco,
         loja: loja,
       });
 

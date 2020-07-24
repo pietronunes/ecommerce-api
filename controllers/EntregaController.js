@@ -56,7 +56,7 @@ class EntregaController {
           return item;
         })
       );
-      const resultados = await calcularFrete(cep, _carinho);
+      const resultados = await calcularFrete({ cep, produtos: _carinho });
       return res.send({ resultados });
     } catch (err) {
       next(err);

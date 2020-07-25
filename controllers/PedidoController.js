@@ -9,6 +9,7 @@ const Pagamento = mongoose.model("Pagamento");
 const RegistroPedido = mongoose.model("RegistroPedido");
 
 const CarrinhoValidation = require("./validacoes/carrinhoValidation");
+const PagamentoValidation = require("./validacoes/pagamentoValidation");
 const EntregaValidation = require("./validacoes/entregaValidation");
 
 class PedidoController {
@@ -54,7 +55,11 @@ class PedidoController {
   async showAdmin(req, res, next) {
     const { loja } = req.query;
     try {
-      const pedido = await Pedido.findOne({ _id: req.params.id, loja }).populate(["cliente", "pagamento", "entrega"]);
+      const pedido = await Pedido.findOne({ _id: req.params.id, loja }).populate([
+        "cliente",
+        "pagamento",
+        "entrega",
+      ]);
       pedido.carrinho = await Promise.all(
         pedido.carrinho.map(async (item) => {
           item.produto = await Produto.findById(item.produto);
@@ -157,7 +162,11 @@ class PedidoController {
     const { id } = req.params;
     try {
       const cliente = await Cliente.findOne({ usuario: req.payload.id });
-      const pedido = await Pedido.findOne({ _id: id, cliente: cliente._id }).populate(["cliente", "entrega", "pagamento"]);
+      const pedido = await Pedido.findOne({ _id: id, cliente: cliente._id }).populate([
+        "cliente",
+        "entrega",
+        "pagamento",
+      ]);
 
       pedido.carrinho = await Promise.all(
         pedido.carrinho.map(async (item) => {
@@ -227,16 +236,29 @@ class PedidoController {
     const { carrinho, entrega, pagamento } = req.body; // OBJS COM INFORMAÇÕES PAGAMENTO, ENTREGA ETC
     const { loja } = req.query;
     try {
-      const cliente = await (await Cliente.findOne({ usuario: req.payload.id })).populate("Usuario");
+      const cliente = await (await Cliente.findOne({ usuario: req.payload.id })).populate(
+        "Usuario"
+      );
       //CHECAR DADOS CARRINHO
-      if (!(await CarrinhoValidation(carrinho))) return res.status(422).send({ errors: "Carrinho Inválido" });
+      if (!(await CarrinhoValidation(carrinho)))
+        return res.status(422).send({ errors: "Carrinho Inválido" });
 
       //CHECAR DADOS ENTREGA
-      if (!(await EntregaValidation.checkValorPrazo(cliente.endereco.CEP, carrinho, entrega)))
+      if (
+        !(await EntregaValidation.checkValorPrazo(
+          cliente.endereco.CEP,
+          carrinho,
+          entrega
+        ))
+      )
         return res.status(422).send({ errors: "Dados de Entrega Inválidos" });
 
       //CHECAR DADOS PAGAMENTO
-      //if(!PagamentoValidation(carrinho, pagamento)) return res.status(422).send({ errors: "Dados de Pagamento Inválidos" });
+      if (!(await PagamentoValidation.checarValorTotal({ carrinho, entrega, pagamento })))
+        return res.status(422).send({ errors: "Dados de Pagamento Inválidos" });
+
+      if (!PagamentoValidation.checarDadosCartao(pagamento))
+        return res.status(422).send({ errors: "Dados do Cartão Inválidos" });
 
       // CRIANDO NOVO PAGAMENTO
       const novoPagamento = new Pagamento({
@@ -287,7 +309,12 @@ class PedidoController {
       await registroPedido.save();
 
       // Retorna um obj mais completo com info de pagamentos/entrega
-      return res.send({ pedido: Object.assign({}, pedido._doc, { entrega: novaEntrega, pagamento: novoPagamento }) });
+      return res.send({
+        pedido: Object.assign({}, pedido._doc, {
+          entrega: novaEntrega,
+          pagamento: novoPagamento,
+        }),
+      });
     } catch (err) {
       next(err);
     }
